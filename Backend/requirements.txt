@@ -1,0 +1,11 @@
+fastapi==0.115.13
+uvicorn==0.34.3
+python-dotenv==1.1.0
+httpx==0.28.1
+google-auth==2.40.3
+requests==2.32.4
+motor==3.7.1
+pydantic==2.11.7
+pydantic[email]
+cryptography==45.0.4
+python-jose==3.5.0
