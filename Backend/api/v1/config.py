@@ -1,5 +1,7 @@
-import os
+from cryptography.fernet import Fernet
 from dotenv import load_dotenv
+import base64
+import os
 
 class AuthConfig:
     def __init__(self):
@@ -19,7 +21,9 @@ class AuthConfig:
     
     @property
     def FERNET_KEY(self):
-        return os.getenv("FERNET_KEY")
+        raw_key = os.getenv("FERNET_KEY")
+        padded_key = base64.urlsafe_b64encode(raw_key.encode().ljust(32)[:32])
+        return Fernet(padded_key)
     
     @property
     def JWT_SECRET_KEY(self):

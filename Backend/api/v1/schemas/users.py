@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, HttpUrl
+from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional
 from datetime import datetime
 
@@ -14,7 +14,7 @@ class OAuthToken(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr
     name: Optional[str] = None
-    picture: Optional[HttpUrl] = None
+    picture: Optional[str] = None
     google_id: str = Field(..., min_length=5)
     oauth: List[OAuthToken]
     created_at: Optional[datetime] = None
