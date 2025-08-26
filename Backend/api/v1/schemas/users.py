@@ -19,3 +19,9 @@ class UserCreate(BaseModel):
     oauth: List[OAuthToken]
     created_at: Optional[datetime] = None
     updated_at: datetime
+
+class UserResponse(BaseModel):
+    email: EmailStr
+    name: Optional[str] = None
+    picture: Optional[str] = None
+    google_id: str

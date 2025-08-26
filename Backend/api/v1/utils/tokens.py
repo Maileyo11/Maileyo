@@ -1,5 +1,5 @@
 import requests
-from fastapi import Depends, HTTPException, status, Request
+from fastapi import HTTPException, status, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from jose import JWTError, jwt, ExpiredSignatureError
 from typing import Dict, Any, Optional
@@ -130,9 +130,10 @@ def refresh_access_token(refresh_token: str) -> Optional[Dict[str, Any]]:
 
 async def get_access_token(
     user: Optional[dict] = None,
-    google_id: Optional[str] = None,
-    db: AsyncIOMotorDatabase = Depends(DatabaseSession.get_db)
-) -> str:
+    google_id: Optional[str] = None
+    ) -> str:
+
+    db = DatabaseSession.get_db()
 
     tokens = await get_oauth_tokens(db=db, google_id=google_id or user["google_id"])
     now = datetime.now(timezone.utc)

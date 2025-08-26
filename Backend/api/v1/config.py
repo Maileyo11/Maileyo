@@ -28,6 +28,10 @@ class AuthConfig:
     @property
     def JWT_SECRET_KEY(self):
         return os.getenv("JWT_SECRET_KEY")
+    
+    @property
+    def FRONTEND_URL(self):
+        return os.getenv("FRONTEND_URL")
 
 class DBConfig:
     def __init__(self):

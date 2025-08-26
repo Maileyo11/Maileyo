@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from api.v1.routers.auth_routers import google
+from api.v1.routers.email_routers import emails
 from fastapi.middleware.cors import CORSMiddleware
 from api.v1.db.init_db import init_db, close_db
 from contextlib import asynccontextmanager
@@ -17,6 +18,7 @@ origins = [
     "https://app.maileyo.com",
     "http://localhost:8000",
     "http://localhost:8080",
+    "http://localhost:5173",
 ]
 
 app.add_middleware(
@@ -28,6 +30,7 @@ app.add_middleware(
 )
 
 app.include_router(google.router, tags=["auth"])
+app.include_router(emails.router, tags=["emails"])
 
 
 if __name__ == "__main__":

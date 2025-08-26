@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Request, Response, status, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
 from api.v1.services.auth_services.google import GoogleAuthService
+from api.v1.utils.tokens import get_current_user
+from api.v1.schemas.users import UserResponse
+from api.v1.config import auth_config
 import secrets
 
 
@@ -31,7 +34,8 @@ async def auth_google_callback(
 ):
     try:
         result = await google_auth_service.handle_google_callback(code, state, request)
-        response = RedirectResponse(url="/")
+        frontend_url = auth_config.FRONTEND_URL
+        response = RedirectResponse(url=frontend_url)
 
         # Set JWT token in HTTP-only cookie for user identification
         response.set_cookie(
@@ -57,4 +61,28 @@ async def auth_google_callback(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"error": "Internal server error during authentication."}
         )
+
+@router.get("/auth/google/user", response_model=UserResponse)
+async def get_user(request: Request):
+    try:
+        user = await get_current_user(request)
+        return UserResponse(
+        email=user["email"],
+        name=user.get("name"),
+        picture=user.get("picture"),
+        google_id=user["google_id"]
+    )
     
+    except HTTPException as http_exc:
+        return JSONResponse(
+            status_code=http_exc.status_code,
+            content={"error": http_exc.detail}
+        )
+    
+    except Exception as e:
+        print("Error in get_current_user:", e)
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"error": "Internal server error while fetching user."}
+        )
+
