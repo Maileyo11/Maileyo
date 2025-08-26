@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { EmailContact, SidebarFolder } from "@/types/email";
 import { emailService } from "@/services/emailService";
@@ -53,6 +53,8 @@ function ContactList({
   onLoadingChange
 }: ContactListProps) {
   const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(null);
+  const observer = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -67,8 +69,14 @@ function ContactList({
       onLoadingChange(true);
       
       const currentPageToken = loadMore ? pageToken : "";
-      const response = await emailService.fetchEmails(folder, 20, currentPageToken);
       
+      // Don't make API call if we're trying to load more but there's no page token
+      if (loadMore && !currentPageToken) {
+        onLoadingChange(false);
+        return;
+      }
+      
+      const response = await emailService.fetchEmails(folder, 20, currentPageToken);
       
       // Access emails directly from response
       const emailsArray = response.emails || [];
@@ -145,11 +153,36 @@ function ContactList({
     }
   }, [selectedFolder, currentUser]);
 
-  const handleLoadMore = () => {
-    if (pageToken && !loading) {
-      fetchContacts(selectedFolder, true);
+  // Set up Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (loading || !pageToken) return;
+    
+    if (observer.current) {
+      observer.current.disconnect();
     }
-  };
+    
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      if (entries[0].isIntersecting && pageToken && !loading) {
+        fetchContacts(selectedFolder, true);
+      }
+    };
+    
+    observer.current = new IntersectionObserver(observerCallback, {
+      root: null,
+      rootMargin: "20px",
+      threshold: 0.1
+    });
+    
+    if (loadMoreRef.current) {
+      observer.current.observe(loadMoreRef.current);
+    }
+    
+    return () => {
+      if (observer.current) {
+        observer.current.disconnect();
+      }
+    };
+  }, [loading, pageToken, selectedFolder, fetchContacts]);
 
   const getCategoryTabs = () => {
     if (selectedFolder === "Primary" || selectedFolder === "Promotions" || selectedFolder === "Social") {
@@ -322,23 +355,12 @@ function ContactList({
               </div>
             ))}
             
-            {/* Load More Button */}
+            {/* Load More indicator for infinite scroll */}
             {pageToken && (
-              <div className="p-4">
-                <button
-                  onClick={handleLoadMore}
-                  disabled={loading}
-                  className="w-full px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-2 inline" />
-                      Loading...
-                    </>
-                  ) : (
-                    "Load More"
-                  )}
-                </button>
+              <div ref={loadMoreRef} className="p-4 flex justify-center">
+                {loading && (
+                  <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                )}
               </div>
             )}
           </div>

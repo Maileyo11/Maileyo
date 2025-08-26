@@ -122,10 +122,10 @@ function Sidebar({ selectedFolder, onFolderSelect }: SidebarProps) {
   };
 
   return (
-    <div className="w-24 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full">
+    <div className="p-1 w-24 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full">
       {/* Logo/Brand */}
       <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex justify-center">
-        <img src="/LogoSVG.svg" alt="Maileyo" className="w-8 h-8" />
+        <img src="/LogoPNG.png" alt="Maileyo" className="w-8 h-8" />
       </div>
 
       {/* Navigation */}

@@ -24,16 +24,16 @@ function HeroSection() {
 
   return (
     <Container>
-      <section className="pt-8 sm:pt-16 md:pt-24 lg:pt-32 bg-[url('https://pagedone.io/asset/uploads/1691055810.png')] bg-center bg-cover">
+      <section className="pt-3 sm:pt-6 md:pt-9 lg:pt-12 bg-[url('https://pagedone.io/asset/uploads/1691055810.png')] bg-center bg-cover">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative text-center">
           
           {/* Maileyo Logo - Elegant floating placement above typewriter */}
           <div className="flex justify-center mb-8 sm:mb-12 md:mb-16">
             <div className="relative">
               <img 
-                src="LogoSVG.svg" 
+                src="LogoPNG.png" 
                 alt="Maileyo Logo" 
-                className="h-16 sm:h-20 md:h-24 lg:h-28 w-auto drop-shadow-lg hover:scale-105 transition-transform duration-300 ease-in-out"
+                className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 lg:h-28 lg:w-28 drop-shadow-lg hover:scale-105 transition-transform duration-300 ease-in-out"
               />
               {/* Optional subtle glow effect */}
               <div className="absolute inset-0 bg-indigo-600/10 rounded-full blur-xl scale-150 -z-10"></div>

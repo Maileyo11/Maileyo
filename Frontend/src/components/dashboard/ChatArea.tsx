@@ -198,14 +198,14 @@ function ChatArea({
 
   if (!selectedContact) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="flex-1 flex items-center justify-center bg-white dark:bg-gray-900 -mt-60">
         <div className="text-center">
-          <img src="/LogoSVG.svg" alt="Maileyo" className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+          <img src="/LogoPNG.png" alt="Maileyo" className="w-40 h-40 mx-auto mb-4" />
+          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white mb-2">
             Work Effortlessly With Maileyo
-          </h3>
+          </h1>
           <p className="text-gray-500 dark:text-gray-400">
-            Select a contact to start viewing your email conversation
+            Your AI-powered copilot for mails
           </p>
         </div>
       </div>

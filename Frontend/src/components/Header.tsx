@@ -81,12 +81,12 @@ function Header() {
 
   return (
     <Container>
-      <nav className="fixed top-0 border-solid border-gray-200 w-full py-3 bg-white z-50 bg-inherit">
+  <nav className="fixed top-0 border-solid border-gray-200 w-full py-[15px] bg-white z-50 bg-inherit shadow-[0_2px_8px_0_rgba(0,0,0,0.06)]">
         <div className="container mx-auto">
           <div className="w-full flex flex-col lg:flex-row">
             <div className="flex justify-between lg:flex-row">
               <a href="/" className="flex items-center">
-                <img src="/LogoSVG.svg" alt="Maileyo Logo" className="w-[80px] h-[33px]" />
+                <img src="/LogoPNG.png" alt="Maileyo Logo" className="w-[55px] h-[33px] mr-2" />
                 <h1 className="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-3xl">
                   Maileyo
                 </h1>

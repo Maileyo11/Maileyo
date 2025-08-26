@@ -132,7 +132,7 @@ function ContactUs() {
                   {/* Maileyo Logo */}
                   <div className="mb-6 flex justify-center">
                     <img 
-                      src="/LogoSVG.svg" 
+                      src="/LogoPNG.png" 
                       alt="Maileyo" 
                       className="h-12 w-auto"
                     />

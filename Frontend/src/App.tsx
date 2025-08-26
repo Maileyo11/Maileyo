@@ -3,11 +3,14 @@ import { Header } from "./components/index";
 import { Toaster } from 'sonner'
 
 
+
 function App() {
   return (
     <div>
       <Header />
-      <Outlet />
+      <div className="pt-[70px]">
+        <Outlet />
+      </div>
       <Toaster position="bottom-right" richColors />
     </div>
   );
