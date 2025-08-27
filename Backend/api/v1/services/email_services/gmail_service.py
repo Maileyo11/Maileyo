@@ -1,3 +1,4 @@
+from fastapi import BackgroundTasks
 import aiohttp
 import base64
 import json
@@ -47,7 +48,7 @@ class GmailService:
     async def fetch_message_ids(
         self,
         user_id: str,
-        folder: str = "Inbox:Primary",
+        folder: Optional[str] = None,
         max_results: int = 20,
         page_token: Optional[str] = None,
         query: Optional[str] = None,
@@ -55,13 +56,16 @@ class GmailService:
         """
         Fetch message IDs from Gmail by folder.
         """
-        if folder not in self.FOLDER_MAP:
-            raise ValueError(
-                f"Unknown folder '{folder}'. Valid options: {list(self.FOLDER_MAP.keys())}"
-            )
 
         params: Dict[str, Any] = {"maxResults": max_results}
-        params.update(self.FOLDER_MAP[folder])
+
+        if folder:
+            if folder not in self.FOLDER_MAP:
+                raise ValueError(
+                    f"Unknown folder '{folder}'. Valid options: {list(self.FOLDER_MAP.keys())}"
+                )
+            params.update(self.FOLDER_MAP[folder])
+
         if page_token:
             params["pageToken"] = page_token
         if query:
@@ -193,10 +197,33 @@ class GmailService:
             "total_count": len(full_messages),
         }
     
+    async def mark_messages_as_read(self, user_id: str, message_ids: List[str]) -> None:
+        """
+        Mark a list of Gmail messages as read by removing the 'UNREAD' label.
+        Runs in background after fetch-by-contact.
+        """
+        if not message_ids:
+            return
+
+        url = f"{self.BASE_URL}/messages/batchModify"
+        headers = await self._get_headers(user_id)
+        payload = {
+            "ids": message_ids,
+            "removeLabelIds": ["UNREAD"]
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, headers=headers, json=payload) as resp:
+                if resp.status not in (200, 204): 
+                    text = await resp.text()
+                    raise Exception(f"Gmail batchModify error {resp.status}: {text}")
+
+    
     async def fetch_emails_by_contact(
         self,
         user_id: str,
         email_address: str,
+        background_tasks: BackgroundTasks,
         max_results: int = 20,
         page_token: Optional[str] = None,
     ) -> Dict[str, Any]:
@@ -205,12 +232,29 @@ class GmailService:
         """
         query = f"from:{email_address} OR to:{email_address}"
 
-        return await self.fetch_messages(
+        contact_message_ids = await self.fetch_message_ids(
             user_id=user_id,
             max_results=max_results,
             page_token=page_token,
-            query=query,
+            query=query
         )
+        message_ids = [m["id"] for m in contact_message_ids.get("messages", [])]
+
+        if message_ids:
+            background_tasks.add_task(
+                self.mark_messages_as_read,
+                user_id,
+                message_ids
+            )
+
+        full_messages = await self.messages_batch_request(user_id, message_ids)
+
+        return {
+            "emails": full_messages,
+            "next_page_token": contact_message_ids.get("nextPageToken"),
+            "result_size_estimate": contact_message_ids.get("resultSizeEstimate", len(full_messages)),
+            "total_count": len(full_messages),
+        }
     
     async def send_email(
             self,
@@ -256,24 +300,4 @@ class GmailService:
                 if resp.status != 200:
                     raise Exception(f"Gmail Send API Error {resp.status}: {await resp.text()}")
                 return await resp.json()
-
-    async def mark_messages_as_read(self, user_id: str, message_ids: List[str]) -> None:
-        """
-        Mark a list of Gmail messages as read by removing the 'UNREAD' label.
-        Runs in background after fetch-by-contact.
-        """
-        if not message_ids:
-            return
-
-        url = f"{self.BASE_URL}/messages/batchModify"
-        headers = await self._get_headers(user_id)
-        payload = {
-            "ids": message_ids,
-            "removeLabelIds": ["UNREAD"]
-        }
-
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, json=payload) as resp:
-                if resp.status != 200:
-                    text = await resp.text()
-                    raise Exception(f"Gmail batchModify error {resp.status}: {text}")
+            

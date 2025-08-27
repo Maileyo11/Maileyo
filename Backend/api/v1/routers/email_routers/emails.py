@@ -75,20 +75,10 @@ async def fetch_emails_by_contact(
         result = await gmail_service.fetch_emails_by_contact(
             user_id=current_user["google_id"],
             email_address=contact_request.email_address,
+            background_tasks=background_tasks,
             max_results=contact_request.max_results,
             page_token=contact_request.page_token
         )
-
-        # Extract message IDs
-        message_ids = [email["id"] for email in result["emails"] if "id" in email]
-
-        # Schedule background marking as read
-        if message_ids:
-            background_tasks.add_task(
-                gmail_service.mark_messages_as_read,
-                current_user["google_id"],
-                message_ids
-            )
         
         return FetchEmailsResponse(
             emails=result["emails"],
