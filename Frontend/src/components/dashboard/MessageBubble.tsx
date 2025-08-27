@@ -76,23 +76,23 @@ function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
       <div className={`max-w-[70%] ${isCurrentUser ? 'order-2' : 'order-1'}`}>
         {/* Message bubble */}
         <div
-          className={`rounded-lg px-4 py-3 shadow-sm ${
+          className={`rounded-2xl px-5 py-3 shadow-md ${
             isCurrentUser
-              ? 'bg-indigo-600 text-white'
-              : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
+              ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-br-3xl rounded-tl-3xl'
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-3xl rounded-tr-3xl border border-gray-200 dark:border-gray-800'
           }`}
         >
           {/* Subject (if different from previous or important) */}
           {message.subject && (
             <div className={`font-semibold mb-2 text-sm ${
-              isCurrentUser ? 'text-indigo-100' : 'text-gray-700 dark:text-gray-300'
+              isCurrentUser ? 'text-blue-100' : 'text-gray-700 dark:text-gray-300'
             }`}>
               {message.subject}
             </div>
           )}
 
           {/* Message content */}
-          <div className={`text-sm leading-relaxed ${
+          <div className={`text-base leading-relaxed ${
             isCurrentUser ? 'text-white' : 'text-gray-800 dark:text-gray-200'
           }`}>
             {renderContent()}
@@ -104,9 +104,9 @@ function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
               {message.attachments.map((attachment, index) => (
                 <div
                   key={index}
-                  className={`flex items-center justify-between p-2 rounded ${
+                  className={`flex items-center justify-between p-2 rounded-xl ${
                     isCurrentUser
-                      ? 'bg-indigo-500/20 text-indigo-100'
+                      ? 'bg-blue-500/20 text-blue-100'
                       : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                   }`}
                 >
@@ -117,7 +117,7 @@ function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
                         {attachment.filename}
                       </p>
                       <p className={`text-xs ${
-                        isCurrentUser ? 'text-indigo-200' : 'text-gray-500 dark:text-gray-400'
+                        isCurrentUser ? 'text-blue-200' : 'text-gray-500 dark:text-gray-400'
                       }`}>
                         {attachment.size ? `${Math.round(attachment.size / 1024)} KB` : 'Unknown size'}
                       </p>
@@ -127,7 +127,7 @@ function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
                     onClick={() => downloadAttachment(attachment)}
                     className={`p-1 rounded hover:bg-opacity-20 transition-colors ${
                       isCurrentUser
-                        ? 'hover:bg-white text-indigo-100'
+                        ? 'hover:bg-white text-blue-100'
                         : 'hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'
                     }`}
                   >
@@ -141,7 +141,7 @@ function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
           {/* Timestamp */}
           <div className={`flex items-center mt-2 pt-2 text-xs ${
             isCurrentUser 
-              ? 'text-indigo-100 justify-end' 
+              ? 'text-blue-100 justify-end' 
               : 'text-gray-500 dark:text-gray-400 justify-start'
           }`}>
             <Clock className="w-3 h-3 mr-1" />
@@ -153,7 +153,7 @@ function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
         {showFullContent && (message.bodyHtml || message.bodyPlain || '').length > 300 && (
           <button
             onClick={() => setShowFullContent(false)}
-            className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline mt-1"
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-1"
           >
             Show less
           </button>

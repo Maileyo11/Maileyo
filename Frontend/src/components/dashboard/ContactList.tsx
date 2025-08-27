@@ -306,32 +306,31 @@ function ContactList({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="divide-y divide-gray-100 dark:divide-gray-800">
             {contacts.map((contact) => (
               <div
                 key={contact.id}
                 onClick={() => onContactSelect(contact)}
-                className={`p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors h-20 flex items-center space-x-3 ${
-                  selectedContact?.id === contact.id 
-                    ? 'bg-blue-50 dark:bg-blue-900/20 border-r-2 border-blue-500' 
-                    : ''
-                }`}
+                className={`p-4 cursor-pointer transition-colors h-20 flex items-center space-x-3 rounded-xl mb-2 group
+                  ${selectedContact?.id === contact.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 shadow' : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'}
+                  ${contact.unread ? 'unread-email' : ''}
+                `}
               >
                 {/* Profile Image */}
                 {getProfileImage(contact.name)}
-                
+
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   {/* Name and Timestamp Row */}
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
                       {contact.name}
                     </h3>
                     <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 flex-shrink-0">
                       {formatTimestamp(contact.timestamp)}
                     </span>
                   </div>
-                  
+
                   {/* Email and Labels Row */}
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
@@ -341,20 +340,20 @@ function ContactList({
                       {getLabelBadges(contact.labels)}
                     </div>
                   </div>
-                  
+
                   {/* Snippet */}
                   <p className="text-xs text-gray-600 dark:text-gray-300 truncate">
                     {truncateSnippet(contact.snippet)}
                   </p>
                 </div>
-                
+
                 {/* Unread indicator */}
                 {contact.unread && (
-                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 animate-pulse"></div>
                 )}
               </div>
             ))}
-            
+
             {/* Load More indicator for infinite scroll */}
             {pageToken && (
               <div ref={loadMoreRef} className="p-4 flex justify-center">

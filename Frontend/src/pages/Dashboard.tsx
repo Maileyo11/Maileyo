@@ -57,39 +57,43 @@ function Dashboard() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-70px)] bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-[calc(100vh-70px)] bg-gradient-to-br from-gray-100 via-white to-gray-200 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900">
       {/* Sidebar */}
       <Sidebar
         selectedFolder={state.selectedFolder}
         onFolderSelect={handleFolderSelect}
       />
-      
+
       {/* Contact List */}
-      <ContactList
-        selectedFolder={state.selectedFolder}
-        selectedContact={state.selectedContact}
-        contacts={state.contacts}
-        loading={state.contactsLoading}
-        pageToken={state.contactsPageToken}
-        onContactSelect={handleContactSelect}
-        onContactsUpdate={(contacts, pageToken) => 
-          updateState({ contacts, contactsPageToken: pageToken })
-        }
-        onLoadingChange={(loading) => updateState({ contactsLoading: loading })}
-      />
-      
+      <div className="flex flex-col w-90 m-4 rounded-2xl shadow-lg bg-white/80 dark:bg-gray-900/80 overflow-hidden">
+        <ContactList
+          selectedFolder={state.selectedFolder}
+          selectedContact={state.selectedContact}
+          contacts={state.contacts}
+          loading={state.contactsLoading}
+          pageToken={state.contactsPageToken}
+          onContactSelect={handleContactSelect}
+          onContactsUpdate={(contacts, pageToken) => 
+            updateState({ contacts, contactsPageToken: pageToken })
+          }
+          onLoadingChange={(loading) => updateState({ contactsLoading: loading })}
+        />
+      </div>
+
       {/* Chat Area */}
-      <ChatArea
-        selectedContact={state.selectedContact}
-        messages={state.messages}
-        loading={state.messagesLoading}
-        pageToken={state.messagesPageToken}
-        onMessagesUpdate={(messages, pageToken) => 
-          updateState({ messages, messagesPageToken: pageToken })
-        }
-        onLoadingChange={(loading) => updateState({ messagesLoading: loading })}
-        onMessageSent={handleMessageSent}
-      />
+      <div className="flex flex-1 flex-col m-4 rounded-2xl shadow-lg bg-white/80 dark:bg-gray-900/80 overflow-hidden">
+        <ChatArea
+          selectedContact={state.selectedContact}
+          messages={state.messages}
+          loading={state.messagesLoading}
+          pageToken={state.messagesPageToken}
+          onMessagesUpdate={(messages, pageToken) => 
+            updateState({ messages, messagesPageToken: pageToken })
+          }
+          onLoadingChange={(loading) => updateState({ messagesLoading: loading })}
+          onMessageSent={handleMessageSent}
+        />
+      </div>
     </div>
   );
 }
