@@ -1,10 +1,8 @@
 import { cn } from "@/lib/utils";
 import {
-
   IconCloud,
   IconCurrencyDollar,
   IconEaseInOut,
-
   IconTerminal2,
 } from "@tabler/icons-react";
 
@@ -33,35 +31,44 @@ export function FeaturesSectionDemo2() {
       description: "We just cannot be taken down by anyone.",
       icon: <IconCloud />,
     },
-    // {
-    //   title: "Multi-tenant Architecture",
-    //   description: "You can simply share passwords instead of buying new seats",
-    //   icon: <IconRouteAltLeft />,
-    // },
-    // {
-    //   title: "24/7 Customer Support",
-    //   description:
-    //     "We are available a 100% of the time. Atleast our AI Agents are.",
-    //   icon: <IconHelp />,
-    // },
-    // {
-    //   title: "Money back guarantee",
-    //   description:
-    //     "If you donot like EveryAI, we will convince you to like us.",
-    //   icon: <IconAdjustmentsBolt />,
-    // },
-    // {
-    //   title: "And everything else",
-    //   description: "I just ran out of copy ideas. Accept my sincere apologies",
-    //   icon: <IconHeart />,
-    // },
   ];
+
   return (
-    <div id="feature" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4  relative z-10 py-10 max-w-7xl mx-auto">
-      {features.map((feature, index) => (
-        <Feature key={feature.title} {...feature} index={index} />
-      ))}
-    </div>
+    <>
+      {/* Description Section */}
+      <div className="text-center max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p className="text-lg sm:text-xl md:text-2xl font-medium text-gray-600 mb-6 leading-relaxed">
+          We deliver all the tools you need to simplify and optimize your email management, without any unnecessary complexity.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex items-center justify-center gap-2 text-gray-500">
+            <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm font-medium">AI-Powered</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-gray-500">
+            <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm font-medium">Secure & Private</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-gray-500">
+            <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm font-medium">Easy Integration</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Features Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 relative z-10 py-10 max-w-7xl mx-auto">
+        {features.map((feature, index) => (
+          <Feature key={feature.title} {...feature} index={index} />
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -79,7 +86,7 @@ const Feature = ({
   return (
     <div
       className={cn(
-        "flex flex-col lg:border-r  py-10 relative group/feature dark:border-neutral-800",
+        "flex flex-col lg:border-r py-10 relative group/feature dark:border-neutral-800",
         (index === 0 || index === 4) && "lg:border-l dark:border-neutral-800",
         index < 4 && "lg:border-b dark:border-neutral-800"
       )}
