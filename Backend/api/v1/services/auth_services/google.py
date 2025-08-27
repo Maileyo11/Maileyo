@@ -20,7 +20,9 @@ class GoogleAuthService:
             "email",
             "profile",
             "https://www.googleapis.com/auth/gmail.readonly",
-            "https://www.googleapis.com/auth/gmail.send"
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/gmail.compose",
+            "https://www.googleapis.com/auth/gmail.modify",
         }
         self.JWT_TOKEN_EXPIRE_MINUTES = 10080 # 7 Days
         self.GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/auth"       

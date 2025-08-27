@@ -54,16 +54,6 @@ class GmailService:
     ) -> Dict[str, Any]:
         """
         Fetch message IDs from Gmail by folder.
-
-        Args:
-            user_id: Google account ID
-            folder: One of the keys from FOLDER_MAP
-            max_results: Maximum number of results to fetch
-            page_token: Page token for pagination
-            query: Optional Gmail search query
-
-        Returns:
-            dict: Gmail API response containing message IDs and nextPageToken
         """
         if folder not in self.FOLDER_MAP:
             raise ValueError(
@@ -93,13 +83,6 @@ class GmailService:
     ) -> List[Dict[str, Any]]:
         """
         Fetch full Gmail messages using batch request.
-
-        Args:
-            user_id: Google account ID
-            message_ids: List of Gmail message IDs.
-
-        Returns:
-            List of message objects.
         """
         if not message_ids:
             return []
@@ -148,7 +131,6 @@ class GmailService:
         # Parse multipart response
         messages: List[Dict[str, Any]] = []
         
-        # Split the response into parts using the boundary
         parts = raw_response.split(f"--{response_boundary}")[1:-1]  # Skip first and last empty parts
         
         for part in parts:
@@ -156,22 +138,16 @@ class GmailService:
             if not part:
                 continue
                 
-            # Check if this is an HTTP response part
             if "Content-Type: application/http" not in part:
                 continue
                 
-            # Extract the HTTP response from the part
             http_response = part.split("\r\n\r\n", 1)[1] if "\r\n\r\n" in part else part
-            
-            # Parse the HTTP response
             response_lines = http_response.split("\r\n")
             
-            # Check status line
             status_line = response_lines[0]
             if not status_line.startswith("HTTP/1.1 200 OK"):
                 raise Exception(f"Batch subrequest failed: {status_line}")
             
-            # Find the end of headers (empty line)
             header_end = None
             for i, line in enumerate(response_lines[1:], 1):
                 if line.strip() == "":
@@ -181,7 +157,6 @@ class GmailService:
             if header_end is None:
                 raise Exception("Invalid HTTP response format: no empty line after headers")
             
-            # Extract JSON body
             json_body = "\r\n".join(response_lines[header_end+1:]).strip()
             
             try:
@@ -203,16 +178,6 @@ class GmailService:
     ) -> Dict[str, Any]:
         """
         Fetch full Gmail messages using message IDs (batched).
-
-        Args:
-            user_id: Google account ID
-            folder: One of the keys from FOLDER_MAP
-            max_results: Maximum number of results
-            page_token: For pagination
-            query: Optional Gmail search query
-
-        Returns:
-            dict with keys: emails, next_page_token, result_size_estimate, total_count
         """
         ids_response = await self.fetch_message_ids(
             user_id=user_id, folder=folder, max_results=max_results, page_token=page_token, query=query
@@ -237,15 +202,6 @@ class GmailService:
     ) -> Dict[str, Any]:
         """
         Fetch all emails exchanged with a specific contact/email address.
-
-        Args:
-            user_id: Google account ID
-            email_address: Contact's email address
-            max_results: Maximum number of results
-            page_token: For pagination
-
-        Returns:
-            dict with keys: emails, next_page_token, result_size_estimate, total_count
         """
         query = f"from:{email_address} OR to:{email_address}"
 
@@ -269,26 +225,13 @@ class GmailService:
     ) -> Dict[str, Any]:
         """
         Send an email using Gmail API.
-
-        Args:
-            user_id: Google account ID
-            to: Comma-separated recipient email addresses
-            subject: Email subject
-            body_plain: Plain text email body
-            body_html: Optional HTML email body
-            cc: Optional list of CC recipients
-            bcc: Optional list of BCC recipients
-            attachments: Optional list of attachments, each as dict with 'filename' and 'data' (base64)
-
-        Returns:
-            dict: Gmail API response for the sent message
         """
         from email.message import EmailMessage
 
         msg = EmailMessage()
         msg["To"] = to
         msg["Subject"] = subject
-        msg["From"] = "me"  # 'me' indicates the authenticated user
+        msg["From"] = "me"
         if cc:
             msg["Cc"] = ", ".join(cc)
         if bcc:
@@ -313,3 +256,24 @@ class GmailService:
                 if resp.status != 200:
                     raise Exception(f"Gmail Send API Error {resp.status}: {await resp.text()}")
                 return await resp.json()
+
+    async def mark_messages_as_read(self, user_id: str, message_ids: List[str]) -> None:
+        """
+        Mark a list of Gmail messages as read by removing the 'UNREAD' label.
+        Runs in background after fetch-by-contact.
+        """
+        if not message_ids:
+            return
+
+        url = f"{self.BASE_URL}/messages/batchModify"
+        headers = await self._get_headers(user_id)
+        payload = {
+            "ids": message_ids,
+            "removeLabelIds": ["UNREAD"]
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, headers=headers, json=payload) as resp:
+                if resp.status != 200:
+                    text = await resp.text()
+                    raise Exception(f"Gmail batchModify error {resp.status}: {text}")

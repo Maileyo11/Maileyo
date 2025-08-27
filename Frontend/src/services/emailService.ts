@@ -72,7 +72,7 @@ class EmailService {
   }
 
   async fetchByContact(request: FetchContactRequest): Promise<ApiResponse<any>> {
-    return this.makeRequest<ApiResponse<any>>("/fetch-by-contact", {
+    return this.makeRequest<ApiResponse<any>>("/emails/fetch-by-contact", {
       method: "POST",
       data: request,
     });

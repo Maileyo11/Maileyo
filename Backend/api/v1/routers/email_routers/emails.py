@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Request, Depends
+from fastapi import APIRouter, HTTPException, status, Request, Depends, BackgroundTasks
 from typing import Optional
 import logging
 
@@ -26,14 +26,6 @@ async def fetch_emails(
     query: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
-    """
-    Fetch emails from specified Gmail folder with pagination and search
-    
-    - **folder**: Gmail folder to fetch from (INBOX, STARRED, SENT, SPAM)
-    - **max_results**: Maximum number of emails to return (1-100)
-    - **page_token**: Token for pagination
-    - **query**: Optional search query to filter emails
-    """
     try:
         if max_results < 1 or max_results > 100:    
             raise HTTPException(
@@ -56,7 +48,6 @@ async def fetch_emails(
             total_count=result["total_count"]
         )
 
-        
     except HTTPException:
         raise
     except Exception as e:
@@ -71,15 +62,9 @@ async def fetch_emails(
 async def fetch_emails_by_contact(
     request: Request,
     contact_request: FetchEmailsByContactRequest,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user)
 ):
-    """
-    Fetch all emails exchanged with a specific contact/email address
-    
-    - **email_address**: Email address of the contact
-    - **max_results**: Maximum number of emails to return (1-100)
-    - **page_token**: Token for pagination
-    """
     try:
         if contact_request.max_results < 1 or contact_request.max_results > 100:
             raise HTTPException(
@@ -93,6 +78,17 @@ async def fetch_emails_by_contact(
             max_results=contact_request.max_results,
             page_token=contact_request.page_token
         )
+
+        # Extract message IDs
+        message_ids = [email["id"] for email in result["emails"] if "id" in email]
+
+        # Schedule background marking as read
+        if message_ids:
+            background_tasks.add_task(
+                gmail_service.mark_messages_as_read,
+                current_user["google_id"],
+                message_ids
+            )
         
         return FetchEmailsResponse(
             emails=result["emails"],
@@ -117,19 +113,7 @@ async def send_email(
     email_request: SendEmailRequest,
     current_user: dict = Depends(get_current_user)
 ):
-    """
-    Send email with full Gmail capabilities
-    
-    - **to**: List of recipient email addresses
-    - **cc**: Optional list of CC recipients
-    - **bcc**: Optional list of BCC recipients
-    - **subject**: Email subject
-    - **body_plain**: Plain text email body
-    - **body_html**: HTML email body
-    - **attachments**: Optional list of file attachments
-    """
     try:
-        # Validate request
         if not email_request.to:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -142,7 +126,6 @@ async def send_email(
                 detail="Either plain text or HTML body is required"
             )
         
-        # Send email
         result = await gmail_service.send_email(
             user_id=current_user["google_id"],
             to=email_request.to,

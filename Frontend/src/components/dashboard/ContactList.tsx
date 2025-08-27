@@ -147,6 +147,34 @@ function ContactList({
     return { contactName, contactEmail };
   };
 
+  // Function to mark email as read by removing UNREAD label locally
+  const markAsRead = useCallback((emailId: string) => {
+    // Update the contacts state to reflect the change
+    const updatedContacts = contacts.map(contact => {
+      if (contact.id === emailId) {
+        return {
+          ...contact,
+          labels: contact.labels.filter(label => label !== 'UNREAD'),
+          unread: false
+        };
+      }
+      return contact;
+    });
+    
+    onContactsUpdate(updatedContacts, pageToken);
+  }, [contacts, pageToken, onContactsUpdate]);
+
+  // Handle contact selection with mark as read functionality
+  const handleContactSelect = useCallback((contact: EmailContact) => {
+    // If the email is unread, mark it as read locally
+    if (contact.unread) {
+      markAsRead(contact.id);
+    }
+    
+    // Call the original onContactSelect handler
+    onContactSelect(contact);
+  }, [markAsRead, onContactSelect]);
+
   useEffect(() => {
     if (currentUser) {
       fetchContacts(selectedFolder);
@@ -232,7 +260,7 @@ function ContactList({
   // Get label badges
   const getLabelBadges = (labels: string[]) => {
     const importantLabels = labels.filter(label => 
-      !['INBOX', 'SENT', 'DRAFT', 'TRASH', 'SPAM'].includes(label)
+      !['INBOX', 'TRASH'].includes(label)
     );
     
     return importantLabels.slice(0, 3).map(label => {
@@ -253,9 +281,13 @@ function ContactList({
 
       // ✅ Normalize Gmail category labels
       let displayLabel = label.toLowerCase();
-      if (label === "CATEGORY_PROMOTIONS") displayLabel = "promotions";
-      if (label === "CATEGORY_SOCIAL") displayLabel = "social";
-      if (label === "CATEGORY_PERSONAL") displayLabel = "personal";
+      if (label === "CATEGORY_PROMOTIONS") displayLabel = "Promotions";
+      if (label === "CATEGORY_SOCIAL") displayLabel = "Social";
+      if (label === "CATEGORY_PERSONAL") displayLabel = "Personal";
+      if (label === "CATEGORY_UPDATES") displayLabel = "Updates";
+      if (label === "CATEGORY_FORUMS") displayLabel = "Forums";
+      if (label === "SENT") displayLabel = "Sent";
+      if (label === "DRAFT") displayLabel = "Draft";
 
       return (
         <span key={label} className={badgeClass}>
@@ -310,7 +342,7 @@ function ContactList({
             {contacts.map((contact) => (
               <div
                 key={contact.id}
-                onClick={() => onContactSelect(contact)}
+                onClick={() => handleContactSelect(contact)}
                 className={`p-4 cursor-pointer transition-colors h-20 flex items-center space-x-3 rounded-xl mb-2 group
                   ${selectedContact?.id === contact.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 shadow' : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'}
                   ${contact.unread ? 'unread-email' : ''}
