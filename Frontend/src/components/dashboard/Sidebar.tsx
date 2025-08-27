@@ -122,14 +122,16 @@ function Sidebar({ selectedFolder, onFolderSelect }: SidebarProps) {
   };
 
   return (
-    <div className="p-1 w-24 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full">
+  <div className="p-1 w-24 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full justify-between">
       {/* Logo/Brand */}
       <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex justify-center">
-        <img src="/LogoPNG.png" alt="Maileyo" className="w-8 h-8" />
+        <a href="/">
+          <img src="/LogoPNG.png" alt="Maileyo" className="w-8 h-8" />
+        </a>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-2 space-y-3 flex flex-col justify-evenly">
+  {/* Navigation */}
+  <nav className="flex-1 p-2 flex flex-col gap-4">
         {folderItems.map((item) => {
           const Icon = item.icon;
           const isSelected = selectedFolder === item.id;
