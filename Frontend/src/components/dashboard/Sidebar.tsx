@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Inbox,
   Star,
@@ -110,9 +111,8 @@ function Sidebar({ selectedFolder, onFolderSelect }: SidebarProps) {
   const handleLogout = async () => {
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      await fetch(`${backendUrl}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
+      await axios.post(`${backendUrl}/auth/logout`, {}, {
+        withCredentials: true
       });
       setUser(null);
       window.location.href = "/";

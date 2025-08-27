@@ -86,3 +86,8 @@ async def get_user(request: Request):
             content={"error": "Internal server error while fetching user."}
         )
 
+@router.post("/auth/logout")
+async def logout():
+    response = Response(content="Logged out successfully")
+    response.delete_cookie(key="token", httponly=True, secure=False, samesite="lax")
+    return response

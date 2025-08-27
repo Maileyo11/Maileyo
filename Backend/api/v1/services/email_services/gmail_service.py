@@ -16,12 +16,12 @@ class GmailService:
     # Folder → Gmail API query/label mapping
     FOLDER_MAP: Dict[str, Dict[str, Any]] = {
         "Primary+Sent": {
-            "q": "-category:promotions -category:social -category:updates -category:forums",
-            "labelIds": ["SENT"],
+            "q": "(in:inbox category:primary) OR in:sent",
+            "labelIds": []
         },
         "Inbox:Primary": {
-            "q": "-category:promotions -category:social -category:updates -category:forums",
-            "labelIds": ["INBOX"],
+            "q": "category:primary in:inbox",
+            "labelIds": ["INBOX"]
         },
         "Inbox:Promotions": {"labelIds": ["CATEGORY_PROMOTIONS", "INBOX"]},
         "Inbox:Social": {"labelIds": ["CATEGORY_SOCIAL", "INBOX"]},
