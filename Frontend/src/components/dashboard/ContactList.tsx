@@ -294,7 +294,7 @@ function ContactList({
       </div>
 
       {/* Contact List */}
-      <div className="flex-1 overflow-y-auto">
+  <div className="flex-1 overflow-y-auto sleek-scrollbar">
         {loading && contacts.length === 0 ? (
           <div className="flex items-center justify-center h-32">
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
