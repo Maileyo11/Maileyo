@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Request, Depends, BackgroundTasks
 from typing import Optional
 import logging
+from datetime import datetime
 
 from api.v1.schemas.emails import (
     FetchEmailsResponse, FetchEmailsByContactRequest,
@@ -129,7 +130,9 @@ async def send_email(
         
         return SendEmailResponse(
             message_id=result["id"],
-            thread_id=result["thread_id"],
+            thread_id=result.get("threadId"),
+            status="sent",
+            sent_at=datetime.now()
         )
         
     except HTTPException:

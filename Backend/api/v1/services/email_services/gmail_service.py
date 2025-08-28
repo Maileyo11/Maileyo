@@ -286,10 +286,14 @@ class GmailService:
             msg.add_alternative(body_html, subtype='html')
         if attachments:
             for attachment in attachments:
-                filename = attachment["filename"]
-                data = attachment["data"]
-                msg.add_attachment(data, maintype='application', subtype='octet-stream', filename=filename)
-        
+                filename = attachment.get("filename", "attachment")
+                data = attachment.get("content")
+                mime_type = attachment.get("mimeType", "application/octet-stream")
+                if data:
+                    # data is a base64 string (no Data URL prefix)
+                    file_bytes = base64.b64decode(data)
+                    maintype, _, subtype = mime_type.partition("/")
+                    msg.add_attachment(file_bytes, maintype=maintype, subtype=subtype, filename=filename)
         raw_msg = msg.as_bytes()
         encoded_msg = base64.urlsafe_b64encode(raw_msg).decode()
         payload = {"raw": encoded_msg}

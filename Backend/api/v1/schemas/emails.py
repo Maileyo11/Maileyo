@@ -88,8 +88,8 @@ class SendEmailRequest(BaseModel):
 class SendEmailResponse(BaseModel):
     message_id: str
     thread_id: str
-    status: str
-    sent_at: datetime
+    status: str = "sent"
+    sent_at: datetime = Field(default_factory=lambda: datetime.now())
 
 
 class EmailSearchQuery(BaseModel):
