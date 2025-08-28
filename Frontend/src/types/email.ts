@@ -1,12 +1,18 @@
+// Email types with improved interface definitions
+
 export type SidebarFolder = 
-  | "Primary+Sent" 
-  | "Primary" 
-  | "Promotions" 
-  | "Social" 
-  | "Starred" 
-  | "Sent" 
-  | "Spam" 
-  | "Drafts";
+  | "Primary+Sent"
+  | "Inbox:Primary" 
+  | "Primary"
+  | "Inbox:Social"
+  | "Social"
+  | "Inbox:Promotions"
+  | "Promotions"
+  | "Starred"
+  | "Sent"
+  | "Spam"
+  | "Drafts"
+  | "Trash";
 
 export interface EmailContact {
   id: string;
@@ -17,6 +23,14 @@ export interface EmailContact {
   labels: string[];
   unread: boolean;
   snippet: string;
+}
+
+export interface EmailAttachment {
+  filename: string;
+  mimeType: string;
+  size: number;
+  attachmentId?: string;
+  content?: string;
 }
 
 export interface EmailMessage {
@@ -35,13 +49,6 @@ export interface EmailMessage {
   labels: string[];
 }
 
-export interface EmailAttachment {
-  filename: string;
-  mimeType: string;
-  size: number;
-  data?: string;
-}
-
 export interface SendEmailRequest {
   to: string[];
   cc?: string[];
@@ -49,25 +56,67 @@ export interface SendEmailRequest {
   subject: string;
   body_plain?: string;
   body_html?: string;
-  attachments?: Record<string, any>[];
+  attachments?: {
+    filename: string;
+    content: string;
+    mimeType: string;
+  }[];
 }
 
 export interface SendEmailResponse {
+  success: boolean;
   message_id: string;
   thread_id: string;
-  status: string;
   sent_at: string;
+  error?: string;
 }
 
 export interface FetchContactRequest {
   email_address: string;
-  max_results: number;
+  max_results?: number;
   page_token?: string;
 }
 
 export interface ApiResponse<T> {
-  data: T;
-  next_page_token?: string;
-  result_size_estimate?: number;
-  total_count?: number;
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
+
+// Gmail API specific types
+export interface GmailHeader {
+  name: string;
+  value: string;
+}
+
+export interface GmailMessagePart {
+  mimeType: string;
+  filename?: string;
+  body?: {
+    data?: string;
+    size?: number;
+    attachmentId?: string;
+  };
+  parts?: GmailMessagePart[];
+}
+
+export interface GmailPayload {
+  headers?: GmailHeader[];
+  body?: {
+    data?: string;
+    size?: number;
+  };
+  parts?: GmailMessagePart[];
+}
+
+export interface GmailMessage {
+  id: string;
+  threadId: string;
+  labelIds?: string[];
+  snippet?: string;
+  payload?: GmailPayload;
+  sizeEstimate?: number;
+  historyId?: string;
+  internalDate: string;
 }

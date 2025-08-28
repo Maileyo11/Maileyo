@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { EmailContact, EmailMessage, SendEmailRequest } from "@/types/email";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,12 @@ function ComposeMessage({ selectedContact, onMessageSent }: ComposeMessageProps)
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Update recipient when selectedContact changes
+  // (fixes: contact email not updating)
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, to: selectedContact.email }));
+  }, [selectedContact.email]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -81,6 +87,9 @@ function ComposeMessage({ selectedContact, onMessageSent }: ComposeMessageProps)
     }
   };
 
+  // Helper: detect if string is HTML
+  const isHtml = (str: string) => /<[a-z][\s\S]*>/i.test(str);
+
   const handleSend = async () => {
     if (!formData.body.trim()) {
       toast.error("Please enter a message");
@@ -89,56 +98,62 @@ function ComposeMessage({ selectedContact, onMessageSent }: ComposeMessageProps)
 
     try {
       setSending(true);
-
+      // Build email data according to backend schema
       const emailData: SendEmailRequest = {
         to: formData.to.split(",").map(email => email.trim()).filter(Boolean),
         subject: formData.subject || "No Subject",
-        body_plain: !isRichText ? formData.body : undefined,
-        body_html: isRichText ? formData.body : undefined,
+        // Auto-detect html/plain
+        body_plain: isHtml(formData.body) ? undefined : formData.body,
+        body_html: isHtml(formData.body) ? formData.body : undefined,
       };
-
-      // Add CC if provided
       if (formData.cc.trim()) {
         emailData.cc = formData.cc.split(",").map(email => email.trim()).filter(Boolean);
       }
-
-      // Add BCC if provided
       if (formData.bcc.trim()) {
         emailData.bcc = formData.bcc.split(",").map(email => email.trim()).filter(Boolean);
       }
-
-      // Handle attachments (simplified - you might need to convert files to base64 or handle differently)
+          // Attachments: convert to { filename, content (base64), mimeType }
       if (attachments.length > 0) {
         emailData.attachments = await Promise.all(
-          attachments.map(async (file) => {
-            return new Promise((resolve) => {
+          attachments.map(
+            (file) => new Promise<{ filename: string; content: string; mimeType: string }>((resolve, reject) => {
               const reader = new FileReader();
               reader.onload = () => {
+                // Remove base64 header if present
+                let content = reader.result as string;
+                   let base64Content = content;
+                   if (content.startsWith("data:")) {
+                     const commaIndex = content.indexOf(",");
+                     base64Content = content.substring(commaIndex + 1);
+                }
                 resolve({
                   filename: file.name,
-                  content: reader.result as string,
+                    content: base64Content,
                   mimeType: file.type
                 });
               };
+              reader.onerror = reject;
               reader.readAsDataURL(file);
-            });
-          })
+            })
+          )
         );
       }
-
       const response = await emailService.sendEmail(emailData);
-
-      // Create a new message object for the UI
+      // If backend returns error, throw
+      if (!response || response.error) {
+        throw new Error(response?.error || "Unknown error");
+      }
+      // UI message object
       const newMessage: EmailMessage = {
-        id: response.message_id,
-        threadId: response.thread_id,
-        from: "me", // Will be replaced with actual user email
+        id: response.message_id || `temp-${Date.now()}`,
+        threadId: response.thread_id || `temp-thread-${Date.now()}`,
+        from: "me",
         to: emailData.to,
         cc: emailData.cc,
         subject: emailData.subject,
         bodyPlain: emailData.body_plain,
         bodyHtml: emailData.body_html,
-        timestamp: response.sent_at,
+        timestamp: response.sent_at || new Date().toISOString(),
         attachments: attachments.map(file => ({
           filename: file.name,
           mimeType: file.type,
@@ -147,10 +162,7 @@ function ComposeMessage({ selectedContact, onMessageSent }: ComposeMessageProps)
         isSent: true,
         labels: ["SENT"]
       };
-
       onMessageSent(newMessage);
-
-      // Reset form
       setFormData({
         to: selectedContact.email,
         cc: "",
@@ -160,108 +172,112 @@ function ComposeMessage({ selectedContact, onMessageSent }: ComposeMessageProps)
       });
       setAttachments([]);
       setIsExpanded(false);
-
       toast.success("Email sent successfully!");
-
     } catch (error) {
-      console.error("Failed to send email:", error);
       toast.error("Failed to send email");
     } finally {
       setSending(false);
     }
   };
 
+  // --- UI ---
   return (
-    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-      {/* Compose header */}
-      <div className="p-3 border-b border-gray-100 dark:border-gray-700">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-            New Message
-          </h3>
-          <div className="flex items-center space-x-2">
-            {/* Rich text toggle */}
-            <button
-              onClick={() => setIsRichText(!isRichText)}
-              className={`px-2 py-1 text-xs rounded transition-colors ${
-                isRichText
-                  ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              }`}
-            >
-              Rich Text
-            </button>
-            
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            >
-              {isExpanded ? "Collapse" : "Expand"}
-            </button>
-          </div>
-        </div>
-      </div>
+  <div className="rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-0">
+
 
       {/* Compose form */}
-      <div className="p-3 space-y-3">
-        {/* Recipients */}
-        <div className="space-y-2">
-          <Input
-            type="email"
-            placeholder="To"
-            value={formData.to}
-            onChange={(e) => handleInputChange("to", e.target.value)}
-            className="text-sm"
-          />
-          
-          {isExpanded && (
-            <>
-              <Input
-                type="email"
-                placeholder="Cc"
-                value={formData.cc}
-                onChange={(e) => handleInputChange("cc", e.target.value)}
-                className="text-sm"
-              />
-              <Input
-                type="email"
-                placeholder="Bcc"
-                value={formData.bcc}
-                onChange={(e) => handleInputChange("bcc", e.target.value)}
-                className="text-sm"
-              />
-            </>
-          )}
+  <div className="px-5 py-1 space-y-2">
+        {/* Rich Text & Expand/Collapse buttons now here */}
+        <div className="flex items-center justify-end gap-2 mb-2">
+          <button
+            onClick={() => setIsRichText(!isRichText)}
+            className={`px-2 py-1 text-xs rounded transition-colors border ${isRichText ? "bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900 dark:text-indigo-200 dark:border-indigo-700" : "text-gray-500 border-gray-200 hover:text-indigo-700 hover:border-indigo-400 dark:text-gray-400 dark:border-gray-700 dark:hover:text-indigo-200"}`}
+            title="Toggle rich text"
+          >
+            Rich Text
+          </button>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="px-2 py-1 text-xs rounded border text-gray-500 border-gray-200 hover:text-indigo-700 hover:border-indigo-400 dark:text-gray-400 dark:border-gray-700 dark:hover:text-indigo-200"
+            title={isExpanded ? "Collapse" : "Expand"}
+          >
+            {isExpanded ? "Collapse" : "Expand"}
+          </button>
+        </div>
+        {/* To & Subject fields side by side with labels */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div className="flex flex-col">
+            <label htmlFor="to-field" className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">To:</label>
+            <Input
+              id="to-field"
+              type="email"
+              value={formData.to}
+              onChange={(e) => handleInputChange("to", e.target.value)}
+              className="text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-indigo-400 focus:ring-indigo-200"
+              placeholder="Enter recipient email(s)"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="subject-field" className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Subject:</label>
+            <Input
+              id="subject-field"
+              value={formData.subject}
+              onChange={(e) => handleInputChange("subject", e.target.value)}
+              className="text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-indigo-400 focus:ring-indigo-200"
+              placeholder="Enter subject"
+            />
+          </div>
         </div>
 
-        {/* Subject */}
+        {/* Cc & Bcc fields (only when expanded) */}
         {isExpanded && (
-          <Input
-            placeholder="Subject"
-            value={formData.subject}
-            onChange={(e) => handleInputChange("subject", e.target.value)}
-            className="text-sm"
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="flex flex-col">
+              <label htmlFor="cc-field" className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Cc:</label>
+              <Input
+                id="cc-field"
+                type="email"
+                value={formData.cc}
+                onChange={(e) => handleInputChange("cc", e.target.value)}
+                className="text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-indigo-400 focus:ring-indigo-200"
+                placeholder="Enter Cc email(s)"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="bcc-field" className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Bcc:</label>
+              <Input
+                id="bcc-field"
+                type="email"
+                value={formData.bcc}
+                onChange={(e) => handleInputChange("bcc", e.target.value)}
+                className="text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-indigo-400 focus:ring-indigo-200"
+                placeholder="Enter Bcc email(s)"
+              />
+            </div>
+          </div>
         )}
 
         {/* Formatting tools */}
         {isRichText && (
-          <div className="flex items-center space-x-1 py-1 border-b border-gray-200 dark:border-gray-600">
+          <div className="flex items-center gap-2 py-1 border-b border-gray-200 dark:border-gray-600 mb-2">
             <button
               onClick={() => applyFormatting("bold")}
-              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+              className="p-1 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900 text-gray-600 dark:text-gray-400"
+              title="Bold"
             >
               <Bold className="w-4 h-4" />
             </button>
             <button
               onClick={() => applyFormatting("italic")}
-              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+              className="p-1 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900 text-gray-600 dark:text-gray-400"
+              title="Italic"
             >
               <Italic className="w-4 h-4" />
             </button>
             <button
               onClick={() => applyFormatting("underline")}
-              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+              className="p-1 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900 text-gray-600 dark:text-gray-400"
+              title="Underline"
             >
               <Underline className="w-4 h-4" />
             </button>
@@ -275,8 +291,8 @@ function ComposeMessage({ selectedContact, onMessageSent }: ComposeMessageProps)
             placeholder="Type your message..."
             value={formData.body}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange("body", e.target.value)}
-            className="min-h-[100px] resize-none text-sm"
-            rows={4}
+            className="min-h-[120px] resize-none text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-indigo-400 focus:ring-indigo-200 shadow-sm"
+            rows={5}
           />
         </div>
 
@@ -286,18 +302,17 @@ function ComposeMessage({ selectedContact, onMessageSent }: ComposeMessageProps)
             {attachments.map((file, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded text-sm"
+                className="flex items-center justify-between p-2 bg-indigo-50 dark:bg-gray-800 rounded text-sm border border-indigo-100 dark:border-gray-700"
               >
-                <div className="flex items-center space-x-2">
-                  <Paperclip className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-700 dark:text-gray-300">{file.name}</span>
-                  <span className="text-gray-500 dark:text-gray-400">
-                    ({formatFileSize(file.size)})
-                  </span>
+                <div className="flex items-center gap-2">
+                  <Paperclip className="w-4 h-4 text-indigo-400" />
+                  <span className="text-gray-800 dark:text-gray-200 font-medium">{file.name}</span>
+                  <span className="text-gray-500 dark:text-gray-400">({formatFileSize(file.size)})</span>
                 </div>
                 <button
                   onClick={() => removeAttachment(index)}
                   className="text-red-500 hover:text-red-700"
+                  title="Remove attachment"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -308,7 +323,7 @@ function ComposeMessage({ selectedContact, onMessageSent }: ComposeMessageProps)
 
         {/* Actions */}
         <div className="flex items-center justify-between pt-2">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <input
               type="file"
               ref={fileInputRef}
@@ -318,17 +333,17 @@ function ComposeMessage({ selectedContact, onMessageSent }: ComposeMessageProps)
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              className="p-2 text-indigo-500 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-100 hover:bg-indigo-100 dark:hover:bg-indigo-900 rounded transition-colors"
+              title="Attach file"
             >
               <Paperclip className="w-4 h-4" />
             </button>
           </div>
-
           <Button
             onClick={handleSend}
             disabled={sending || !formData.body.trim()}
             size="sm"
-            className="flex items-center space-x-2"
+            className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-indigo-700 hover:from-indigo-600 hover:to-indigo-800 text-white shadow-md px-4 py-2 rounded"
           >
             {sending ? (
               <>

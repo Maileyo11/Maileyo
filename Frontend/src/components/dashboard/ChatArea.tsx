@@ -66,6 +66,27 @@ function ChatArea({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Fixed base64 decoding function
+  const decodeBase64UrlSafe = (str: string): string => {
+    try {
+      // Convert URL-safe base64 to standard base64
+      let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+      
+      // Add padding if needed
+      const padding = base64.length % 4;
+      if (padding) {
+        base64 += '='.repeat(4 - padding);
+      }
+      
+      // Decode and handle potential Unicode issues
+      const decoded = atob(base64);
+      return decodeURIComponent(escape(decoded));
+    } catch (error) {
+      console.error('Failed to decode base64:', error, 'Original string:', str);
+      return str; // Return original string if decoding fails
+    }
+  };
+
   const fetchMessages = useCallback(async (contact: EmailContact, loadMore = false) => {
     if (!contact) return;
 
@@ -79,27 +100,35 @@ function ChatArea({
         page_token: currentPageToken
       });
 
+
+      // Fixed: Access emails directly from response, not response.data
+      const emailsArray = response.emails || [];
+
       // Transform response to EmailMessage format
-      const newMessages: EmailMessage[] = response.data?.emails?.map((email: RawEmail) => ({
-        id: email.id,
-        threadId: email.threadId,
-        from: extractEmail(email.payload?.headers, 'From'),
-        to: extractEmails(email.payload?.headers, 'To'),
-        cc: extractEmails(email.payload?.headers, 'Cc'),
-        subject: extractHeader(email.payload?.headers, 'Subject') || '',
-        bodyPlain: extractTextContent(email.payload),
-        bodyHtml: extractHtmlContent(email.payload),
-        timestamp: new Date(parseInt(email.internalDate)).toISOString(),
-        attachments: extractAttachments(email.payload),
-        isSent: email.labelIds?.includes('SENT') || false,
-        labels: email.labelIds || []
-      })) || [];
+      const newMessages: EmailMessage[] = emailsArray.map((email: RawEmail) => {
+        const extractedMessage = {
+          id: email.id,
+          threadId: email.threadId,
+          from: extractEmail(email.payload?.headers, 'From'),
+          to: extractEmails(email.payload?.headers, 'To'),
+          cc: extractEmails(email.payload?.headers, 'Cc'),
+          subject: extractHeader(email.payload?.headers, 'Subject') || '',
+          bodyPlain: extractTextContent(email.payload),
+          bodyHtml: extractHtmlContent(email.payload),
+          timestamp: new Date(parseInt(email.internalDate)).toISOString(),
+          attachments: extractAttachments(email.payload),
+          isSent: email.labelIds?.includes('SENT') || false,
+          labels: email.labelIds || []
+        };
+        
+        return extractedMessage;
+      });
 
       const updatedMessages = loadMore ? [...messages, ...newMessages] : newMessages;
       // Sort messages by timestamp
       updatedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
       
-      onMessagesUpdate(updatedMessages, response.data?.next_page_token || "");
+      onMessagesUpdate(updatedMessages, response.next_page_token || "");
       
     } catch (error) {
       console.error("Failed to fetch messages:", error);
@@ -110,13 +139,26 @@ function ChatArea({
   }, [messages, pageToken, onMessagesUpdate, onLoadingChange]);
 
   const extractHeader = (headers: EmailHeader[] | undefined, name: string) => {
-    return headers?.find(h => h.name === name)?.value || '';
+    const header = headers?.find(h => h.name === name)?.value || '';
+    return header;
   };
 
   const extractEmail = (headers: EmailHeader[] | undefined, name: string) => {
     const headerValue = extractHeader(headers, name);
+    if (!headerValue) return '';
+    
+    // Try to extract email from "Name <email>" format
     const match = headerValue.match(/<(.+?)>/);
-    return match ? match[1] : headerValue.split('@')[0] ? headerValue : '';
+    if (match) {
+      return match[1];
+    }
+    
+    // If no angle brackets, check if it's already an email
+    if (headerValue.includes('@')) {
+      return headerValue.trim();
+    }
+    
+    return headerValue; // Return as-is if no @ symbol
   };
 
   const extractEmails = (headers: EmailHeader[] | undefined, name: string) => {
@@ -124,22 +166,36 @@ function ChatArea({
     if (!headerValue) return [];
     
     const emails = headerValue.split(',').map((email: string) => {
+      email = email.trim();
+      
+      // Try to extract email from "Name <email>" format
       const match = email.match(/<(.+?)>/);
-      return match ? match[1] : email.trim();
-    });
+      if (match) {
+        return match[1];
+      }
+      
+      if (email.includes('@')) {
+        return email;
+      }
+      
+      return null;
+    }).filter(Boolean) as string[];
     
-    return emails.filter((email: string) => email.includes('@'));
+    return emails;
   };
 
   const extractTextContent = (payload: EmailPayload | undefined): string => {
+    
     if (payload?.body?.data) {
-      return atob(payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+      const decoded = decodeBase64UrlSafe(payload.body.data);
+      return decoded;
     }
     
     if (payload?.parts) {
       for (const part of payload.parts) {
         if (part.mimeType === 'text/plain' && part.body?.data) {
-          return atob(part.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+          const decoded = decodeBase64UrlSafe(part.body.data);
+          return decoded;
         }
       }
     }
@@ -148,10 +204,12 @@ function ChatArea({
   };
 
   const extractHtmlContent = (payload: EmailPayload | undefined): string => {
+    
     if (payload?.parts) {
       for (const part of payload.parts) {
         if (part.mimeType === 'text/html' && part.body?.data) {
-          return atob(part.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+          const decoded = decodeBase64UrlSafe(part.body.data);
+          return decoded;
         }
       }
     }
@@ -213,7 +271,7 @@ function ChatArea({
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900 h-full min-h-0">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
         <div className="flex items-center">
@@ -232,9 +290,15 @@ function ChatArea({
       </div>
 
       {/* Messages */}
-      <div 
+      <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4"
+        className="flex-1 min-h-0 max-h-[calc(100vh-220px)] overflow-y-auto p-4 space-y-4"
+        style={{
+          /* fallback for max height if Tailwind is not enough */
+          minHeight: 0,
+          maxHeight: 'calc(100vh - 220px)',
+          overflowY: 'auto',
+        }}
       >
         {loading && messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">

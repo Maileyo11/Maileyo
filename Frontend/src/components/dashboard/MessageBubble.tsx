@@ -1,4 +1,4 @@
-import { useState } from "react";
+
 import { EmailMessage } from "@/types/email";
 import { Paperclip, Download, Clock } from "lucide-react";
 
@@ -8,7 +8,7 @@ interface MessageBubbleProps {
 }
 
 function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
-  const [showFullContent, setShowFullContent] = useState(false);
+
 
   const formatTimestamp = (timestamp: string) => {
     try {
@@ -25,37 +25,34 @@ function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
     }
   };
 
-  const truncateContent = (content: string, maxLength: number = 300) => {
-    if (content.length <= maxLength) return content;
-    return content.slice(0, maxLength);
-  };
+
 
   const renderContent = () => {
     let content = message.bodyHtml || message.bodyPlain || '';
-    
-    if (!showFullContent) {
-      content = truncateContent(content);
+    console.log('Rendering message content:', {
+      messageId: message.id,
+      hasBodyHtml: !!message.bodyHtml,
+      hasBodyPlain: !!message.bodyPlain,
+      contentLength: content.length,
+      contentPreview: content.substring(0, 100)
+    });
+    // If no content, show a fallback
+    if (!content || content.trim() === '') {
+      content = '[No content available]';
     }
-
-    if (message.bodyHtml && showFullContent) {
+    // Always render as HTML if available, otherwise as plain text
+    if (message.bodyHtml) {
       return (
-        <div 
-          className="prose prose-sm max-w-none dark:prose-invert"
-          dangerouslySetInnerHTML={{ __html: content }}
+        <div
+          className="prose prose-sm max-w-full dark:prose-invert overflow-x-auto"
+          style={{ wordBreak: 'break-word' }}
+          dangerouslySetInnerHTML={{ __html: message.bodyHtml }}
         />
       );
     } else {
       return (
-        <div className="whitespace-pre-wrap">
-          {content}
-          {!showFullContent && (message.bodyHtml || message.bodyPlain || '').length > 300 && (
-            <button
-              onClick={() => setShowFullContent(true)}
-              className="text-indigo-600 dark:text-indigo-400 hover:underline ml-2 text-sm"
-            >
-              ...Show more
-            </button>
-          )}
+        <div className="whitespace-pre-wrap max-w-full overflow-x-auto" style={{ wordBreak: 'break-word' }}>
+          {message.bodyPlain}
         </div>
       );
     }
@@ -70,6 +67,8 @@ function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
       console.error("Failed to download attachment:", error);
     }
   };
+
+
 
   return (
     <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-4`}>
@@ -149,15 +148,7 @@ function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
           </div>
         </div>
 
-        {/* Show more/less toggle for long content */}
-        {showFullContent && (message.bodyHtml || message.bodyPlain || '').length > 300 && (
-          <button
-            onClick={() => setShowFullContent(false)}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-1"
-          >
-            Show less
-          </button>
-        )}
+
       </div>
     </div>
   );
