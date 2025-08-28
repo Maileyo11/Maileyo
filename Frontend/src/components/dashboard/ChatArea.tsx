@@ -96,7 +96,7 @@ function ChatArea({
       const currentPageToken = loadMore ? pageToken : "";
       const response = await emailService.fetchByContact({
         email_address: contact.email,
-        max_results: 20,
+        max_results: 5,
         page_token: currentPageToken
       });
 

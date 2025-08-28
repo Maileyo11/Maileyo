@@ -5,7 +5,8 @@ from datetime import datetime
 
 from api.v1.schemas.emails import (
     FetchEmailsResponse, FetchEmailsByContactRequest,
-    SendEmailRequest, SendEmailResponse, EmailFolder
+    SendEmailRequest, SendEmailResponse, EmailFolder,
+    DownloadAttachmentResponse
 )
 from api.v1.services.email_services.gmail_service import GmailService
 from api.v1.utils.tokens import get_current_user
@@ -144,3 +145,41 @@ async def send_email(
             detail="Failed to send email"
         )
 
+@router.get("/attachments/{message_id}/{attachment_id}", response_model=DownloadAttachmentResponse)
+async def download_attachment(
+    message_id: str,
+    attachment_id: str,
+    file_name: str = "attachment",
+    mime_type: str = "application/octet-stream",
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Download an email attachment by message ID and attachment ID.
+    
+    - **message_id**: Gmail message ID containing the attachment
+    - **attachment_id**: Specific attachment ID within the message
+    """
+    try:
+        result = await gmail_service.download_attachment(
+            user_id=current_user["google_id"],
+            message_id=message_id,
+            attachment_id=attachment_id,
+            file_name=file_name,
+            mime_type=mime_type
+        )
+        
+        return DownloadAttachmentResponse(
+            filename=result["filename"],
+            mime_type=result["mime_type"],
+            size=result["size"],
+            data=result["data"]  # base64 encoded
+        )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error downloading attachment: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to download attachment"
+        )

@@ -90,12 +90,10 @@ interface FetchByContactResponse {
 class EmailService {
   private async makeRequest<T>(endpoint: string, options: AxiosRequestConfig = {}): Promise<T> {
     try {
-      console.log(`Making API request to: ${endpoint}`, options);
       const response = await axiosInstance({
         url: endpoint,
         ...options,
       });
-      console.log(`API response from ${endpoint}:`, response.data);
       return response.data;
     } catch (error: any) {
       console.error(`API request failed for ${endpoint}:`, error);
@@ -124,12 +122,10 @@ class EmailService {
   }
 
   async fetchByContact(request: FetchContactRequest): Promise<FetchByContactResponse> {
-    console.log('fetchByContact request:', request);
     const response = await this.makeRequest<FetchByContactResponse>("/emails/fetch-by-contact", {
       method: "POST",
       data: request,
     });
-    console.log('fetchByContact response:', response);
     return response;
   }
 
@@ -140,14 +136,14 @@ class EmailService {
     });
   }
 
-  async downloadAttachment(messageId: string, attachmentId: string): Promise<Blob> {
+  /**
+   * Download attachment using backend API, returns { filename, mime_type, size, data (base64) }
+   */
+  async downloadAttachmentByApi(messageId: string, attachmentId: string, fileName: string, mimeType: string): Promise<{ filename: string; mime_type: string; size: number; data: string }> {
     try {
-      const response = await axiosInstance.get(
-        `/emails/${messageId}/attachments/${attachmentId}`,
-        {
-          responseType: "blob",
-        }
-      );
+      const params = new URLSearchParams({ file_name: fileName, mime_type: mimeType });
+      const url = `/emails/attachments/${messageId}/${attachmentId}?${params.toString()}`;
+      const response = await axiosInstance.get(url);
       return response.data;
     } catch (error: any) {
       if (error.response) {

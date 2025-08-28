@@ -1,6 +1,8 @@
 
 import { EmailMessage } from "@/types/email";
 import { Paperclip, Download, Clock } from "lucide-react";
+import { emailService } from "@/services/emailService";
+import { toast } from "sonner";
 
 interface MessageBubbleProps {
   message: EmailMessage;
@@ -29,14 +31,6 @@ function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
 
   const renderContent = () => {
     let content = message.bodyHtml || message.bodyPlain || '';
-    console.log('Rendering message content:', {
-      messageId: message.id,
-      hasBodyHtml: !!message.bodyHtml,
-      hasBodyPlain: !!message.bodyPlain,
-      contentLength: content.length,
-      contentPreview: content.substring(0, 100)
-    });
-    // If no content, show a fallback
     if (!content || content.trim() === '') {
       content = '[No content available]';
     }
@@ -60,11 +54,43 @@ function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
 
   const downloadAttachment = async (attachment: any) => {
     try {
-      // This would need to be implemented based on your backend API
-      console.log("Downloading attachment:", attachment.filename);
-      // Add actual download implementation here
-    } catch (error) {
+      if (!message.id || !attachment.attachmentId) {
+        toast.error("Attachment info missing");
+        return;
+      }
+      // Call backend API to get base64 data
+      const result = await emailService.downloadAttachmentByApi(
+        message.id,
+        attachment.attachmentId,
+        attachment.filename,
+        attachment.mimeType || "application/octet-stream"
+      );
+      // Convert base64url to base64 for atob
+      let base64 = result.data.replace(/-/g, '+').replace(/_/g, '/');
+      // Add padding if needed
+      const pad = base64.length % 4;
+      if (pad) base64 += '='.repeat(4 - pad);
+      const byteCharacters = atob(base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: result.mime_type });
+      // Create a link and trigger download
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      link.download = result.filename;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        window.URL.revokeObjectURL(link.href);
+        document.body.removeChild(link);
+      }, 100);
+      toast.success("Attachment downloaded");
+    } catch (error: any) {
       console.error("Failed to download attachment:", error);
+      toast.error("Failed to download attachment");
     }
   };
 

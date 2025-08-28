@@ -304,4 +304,38 @@ class GmailService:
                 if resp.status != 200:
                     raise Exception(f"Gmail Send API Error {resp.status}: {await resp.text()}")
                 return await resp.json()
+
+    async def download_attachment(
+        self,
+        user_id: str,
+        message_id: str,
+        attachment_id: str,
+        file_name: str = "attachment",
+        mime_type: str = "application/octet-stream"
+
+    ) -> Dict[str, Any]:
+        """
+        Download an email attachment from Gmail API.
             
+        Returns:
+            Dict containing filename, mime_type, size, and base64 encoded data
+        """
+        headers = await self._get_headers(user_id)
+        
+        async with aiohttp.ClientSession() as session:
+            attachment_url = f"{self.BASE_URL}/messages/{message_id}/attachments/{attachment_id}"
+            async with session.get(attachment_url, headers=headers) as resp:
+                if resp.status != 200:
+                    raise Exception(f"Gmail Attachment API Error {resp.status}: {await resp.text()}")
+                attachment_data = await resp.json()
+        
+        print("=================================Attachment Data=================================")
+        print(attachment_data)
+        print("========================================00 ATTACHMENT DATA 00=========================================")
+        
+        return {
+            "filename": file_name,
+            "mime_type": mime_type,
+            "size": attachment_data["size"],
+            "data": attachment_data["data"]  # Base64 encoded attachment data
+        }

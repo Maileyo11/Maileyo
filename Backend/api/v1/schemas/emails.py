@@ -96,3 +96,10 @@ class EmailSearchQuery(BaseModel):
     query: str
     max_results: int = Field(10, ge=1, le=100)
     page_token: Optional[str] = None
+
+class DownloadAttachmentResponse(BaseModel):
+    """Response model for downloaded email attachment."""
+    filename: str = Field(..., description="Original filename of the attachment")
+    mime_type: str = Field(..., description="MIME type of the attachment")
+    size: int = Field(..., description="Size of the attachment in bytes")
+    data: str = Field(..., description="Base64 encoded attachment data")
