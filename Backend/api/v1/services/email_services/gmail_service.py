@@ -329,10 +329,6 @@ class GmailService:
                     raise Exception(f"Gmail Attachment API Error {resp.status}: {await resp.text()}")
                 attachment_data = await resp.json()
         
-        print("=================================Attachment Data=================================")
-        print(attachment_data)
-        print("========================================00 ATTACHMENT DATA 00=========================================")
-        
         return {
             "filename": file_name,
             "mime_type": mime_type,
