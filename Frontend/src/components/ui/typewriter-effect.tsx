@@ -69,10 +69,11 @@ export const TypewriterEffect = ({
       </motion.div>
     );
   };
+
   return (
     <div
       className={cn(
-        "text-base sm:text-xl md:text-3xl lg:text-5xl font-bold text-center",
+        "flex items-center justify-center gap-1 text-base sm:text-xl md:text-3xl lg:text-5xl font-bold",
         className
       )}
     >
@@ -88,7 +89,7 @@ export const TypewriterEffect = ({
           repeatType: "reverse",
         }}
         className={cn(
-          "inline-block w-4 h-4 md:w-6 md:h-6 lg:w-10 lg:h-10",
+          "inline-block align-middle w-4 h-4 md:w-6 md:h-6 lg:w-10 lg:h-10",
           cursorClassName
         )}
       />
@@ -124,7 +125,7 @@ export const TypewriterEffectSmooth = ({
               {word.text.map((char, index) => (
                 <span
                   key={`char-${index}`}
-                  className={cn(`dark:text-white text-black `, word.className)}
+                  className={cn(`dark:text-white text-black`, word.className)}
                 >
                   {char}
                 </span>
@@ -138,7 +139,12 @@ export const TypewriterEffectSmooth = ({
   };
 
   return (
-    <div className={cn("flex space-x-1 my-6", className)}>
+    <div
+      className={cn(
+        "flex items-center justify-center gap-1 my-6",
+        className
+      )}
+    >
       <motion.div
         className="overflow-hidden pb-2"
         initial={{
@@ -154,13 +160,13 @@ export const TypewriterEffectSmooth = ({
         }}
       >
         <div
-          className="text-xs sm:text-base md:text-xl lg:text:3xl xl:text-5xl font-bold"
+          className="text-xs sm:text-base md:text-xl lg:text-3xl xl:text-5xl font-bold"
           style={{
             whiteSpace: "nowrap",
           }}
         >
-          {renderWords()}{" "}
-        </div>{" "}
+          {renderWords()}
+        </div>
       </motion.div>
       <motion.img
         src="/LogoPNG.png"
@@ -173,7 +179,7 @@ export const TypewriterEffectSmooth = ({
           repeatType: "reverse",
         }}
         className={cn(
-          "inline-block w-4 h-4 md:w-6 md:h-6 lg:w-10 lg:h-10",
+          "inline-block align-middle w-4 h-4 md:w-6 md:h-6 lg:w-10 lg:h-10",
           cursorClassName
         )}
       />
