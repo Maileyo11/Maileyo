@@ -156,7 +156,7 @@ function ContactUs() {
                       />
                     </svg>
                     <h5 className="text-black text-base font-normal leading-6 ml-5">
-                      varun@maileyo.com
+                      varun@maileyo.in
                     </h5>
                   </div>
                   

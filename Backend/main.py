@@ -19,7 +19,9 @@ origins = [
     "http://localhost:8000",
     "http://localhost:8080",
     "http://localhost:5173",
-    "https://maileyo.vercel.app/"
+    "https://maileyo.vercel.app/",
+    "https://app.maileyo.in",
+    "https://maileyo.in",
 ]
 
 app.add_middleware(
@@ -36,4 +38,4 @@ app.include_router(emails.router, tags=["emails"])
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="localhost", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

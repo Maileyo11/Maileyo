@@ -43,10 +43,10 @@ async def auth_google_callback(
             value=result["token"],
             max_age=google_auth_service.JWT_TOKEN_EXPIRE_MINUTES * 60,
             httponly=True,
-            secure=False,
-            samesite="lax"
+            secure=True,
+            samesite="none",
+            domain=".maileyo.in"
         )
-
         return response
     
     except HTTPException as http_exc:
