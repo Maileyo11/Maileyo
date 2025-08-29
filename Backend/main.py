@@ -15,7 +15,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 origins = [
-    "https://app.maileyo.in", 
     "https://maileyo.in",       
     "https://www.maileyo.in",   
     "http://localhost:8000",    

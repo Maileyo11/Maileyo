@@ -20,7 +20,7 @@ async def login_google():
         key="oauth_state",
         value=state,
         httponly=True,
-        secure=False,
+        secure=True,
         samesite="lax"
     )
     return response
@@ -89,5 +89,10 @@ async def get_user(request: Request):
 @router.post("/auth/logout")
 async def logout():
     response = Response(content="Logged out successfully")
-    response.delete_cookie(key="token", httponly=True, secure=False, samesite="lax")
+    response.delete_cookie(
+        key="token",
+        domain=".maileyo.in",
+        secure=True,
+        samesite="none"
+    )
     return response
