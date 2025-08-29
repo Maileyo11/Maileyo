@@ -15,13 +15,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 origins = [
-    "https://app.maileyo.com",
-    "http://localhost:8000",
-    "http://localhost:8080",
-    "http://localhost:5173",
-    "https://maileyo.vercel.app/",
-    "https://app.maileyo.in",
-    "https://maileyo.in",
+    "https://app.maileyo.in", 
+    "https://maileyo.in",       
+    "https://www.maileyo.in",   
+    "http://localhost:8000",    
+    "http://localhost:8080",    
+    "http://localhost:5173",    
 ]
 
 app.add_middleware(
@@ -34,6 +33,14 @@ app.add_middleware(
 
 app.include_router(google.router, tags=["auth"])
 app.include_router(emails.router, tags=["emails"])
+
+@app.get("/wakeup")
+async def wakeup():
+    return {"status": "awake", "message": "This server is awake."}
+
+@app.head("/wakeup")
+async def wakeup_head():
+    return
 
 
 if __name__ == "__main__":
