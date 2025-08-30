@@ -1,3 +1,4 @@
+import axios from 'axios';
 
 export async function fetchAuthenticatedUser(): Promise<null | {
   email: string;
@@ -7,16 +8,13 @@ export async function fetchAuthenticatedUser(): Promise<null | {
 }> {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   try {
-    const res = await fetch(`${backendUrl}/auth/google/user`, {
-      method: 'GET',
-      credentials: 'include',
+    const res = await axios.get(`${backendUrl}/auth/google/user`, {
+      withCredentials: true,
       headers: {
         'accept': 'application/json',
       },
     });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (data && data.google_id) return data;
+    if (res.data && res.data.google_id) return res.data;
     return null;
   } catch (e) {
     return null;
