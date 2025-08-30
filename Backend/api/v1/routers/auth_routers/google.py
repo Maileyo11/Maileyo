@@ -21,7 +21,9 @@ async def login_google():
         value=state,
         httponly=True,
         secure=True,
-        samesite="lax"
+        samesite="lax",
+        domain=".maileyo.in",
+        max_age=200
     )
     return response
 
