@@ -47,7 +47,6 @@ async def auth_google_callback(
             httponly=True,
             secure=True,
             samesite="lax",  # Changed from "none" to "lax"
-            domain=".maileyo.in"
         )
         return response
     
@@ -114,7 +113,6 @@ async def logout():
     response = Response(content="Logged out successfully")
     response.delete_cookie(
         key="token",
-        domain=".maileyo.in",
         secure=True,
         samesite="lax"  # Changed from "none" to "lax"
     )
