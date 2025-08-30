@@ -26,8 +26,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"]  # Add this line
 )
 
 app.include_router(google.router, tags=["auth"])
@@ -41,6 +42,10 @@ async def wakeup():
 async def wakeup_head():
     return
 
+# Add explicit OPTIONS handler for preflight requests
+@app.options("/{full_path:path}")
+async def options_handler():
+    return {"status": "ok"}
 
 if __name__ == "__main__":
     import uvicorn
