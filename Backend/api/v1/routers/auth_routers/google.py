@@ -46,7 +46,7 @@ async def auth_google_callback(
             max_age=google_auth_service.JWT_TOKEN_EXPIRE_MINUTES * 60,
             httponly=True,
             secure=True,
-            samesite="none",
+            samesite="lax",
             domain=".maileyo.in"
         )
         return response
@@ -95,6 +95,6 @@ async def logout():
         key="token",
         domain=".maileyo.in",
         secure=True,
-        samesite="none"
+        samesite="lax"
     )
     return response
