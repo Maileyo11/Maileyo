@@ -46,7 +46,7 @@ async def auth_google_callback(
             max_age=google_auth_service.JWT_TOKEN_EXPIRE_MINUTES * 60,
             httponly=True,
             secure=True,
-            samesite="lax",
+            samesite="lax",  # Changed from "none" to "lax"
             domain=".maileyo.in"
         )
         return response
@@ -67,25 +67,46 @@ async def auth_google_callback(
 @router.get("/auth/google/user", response_model=UserResponse)
 async def get_user(request: Request):
     try:
+        # Add CORS headers explicitly for this endpoint
         user = await get_current_user(request)
-        return UserResponse(
-        email=user["email"],
-        name=user.get("name"),
-        picture=user.get("picture"),
-        google_id=user["google_id"]
-    )
+        
+        response_data = UserResponse(
+            email=user["email"],
+            name=user.get("name"),
+            picture=user.get("picture"),
+            google_id=user["google_id"]
+        )
+        
+        # Return JSONResponse with explicit headers
+        return JSONResponse(
+            content=response_data.dict(),
+            headers={
+                "Access-Control-Allow-Origin": "https://maileyo.in",
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Headers": "*"
+            }
+        )
     
     except HTTPException as http_exc:
         return JSONResponse(
             status_code=http_exc.status_code,
-            content={"error": http_exc.detail}
+            content={"error": http_exc.detail},
+            headers={
+                "Access-Control-Allow-Origin": "https://maileyo.in",
+                "Access-Control-Allow-Credentials": "true"
+            }
         )
     
     except Exception as e:
         print("Error in get_current_user:", e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"error": "Internal server error while fetching user."}
+            content={"error": "Internal server error while fetching user."},
+            headers={
+                "Access-Control-Allow-Origin": "https://maileyo.in",
+                "Access-Control-Allow-Credentials": "true"
+            }
         )
 
 @router.post("/auth/logout")
@@ -95,6 +116,6 @@ async def logout():
         key="token",
         domain=".maileyo.in",
         secure=True,
-        samesite="lax"
+        samesite="lax"  # Changed from "none" to "lax"
     )
     return response
