@@ -14,6 +14,7 @@ export async function fetchAuthenticatedUser(): Promise<null | {
         'accept': 'application/json',
       },
     });
+    console.log(res.data);
     if (res.data && res.data.google_id) return res.data;
     return null;
   } catch (e) {
